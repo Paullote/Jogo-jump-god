@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo Dino Personalizado</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="player"></div>
+        <div id="ground"></div>
+        <div id="enemy"></div>
+        <div id="score">Pontos: 0</div>
+        <div id="game-over" style="display: none;">Game Over! Pressione Espaço para reiniciar.</div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    width: 800px;
+    height: 300px;
+    background-color: #87ceeb;
+    border: 1px solid #000;
+}
+
+#player {
+    position: absolute;
+    bottom: 0;
+    left: 50px;
+    width: 50px;
+    height: 50px;
+    background-image: url('IMG-20241124-WA0004.jpg'); /* Substitua pela sua imagem */
+    background-size: cover;
+    transition: bottom 0.2s ease-out;
+}
+
+#ground {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 20px;
+    background-color: #228B22;
+}
+
+#enemy {
+    position: absolute;
+    bottom: 20px;
+    right: -50px;
+    width: 50px;
+    height: 50px;
+    background-image: url('IMG-20241124-WA0001.jpg'); /* Substitua pela sua imagem */
+    background-size: cover;
+}
+
+#score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 20px;
+    color: #000;
+}
+
+#game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: red;
+    text-align: center;
+}
+
+</style>
+<script>
+let player = document.getElementById("player");
+let enemy = document.getElementById("enemy");
+let scoreElement = document.getElementById("score");
+let gameContainer = document.getElementById("game-container");
+let gameOverMessage = document.getElementById("game-over");
+
+let isJumping = false;
+let score = 0;
+let enemySpeed = 2;  // Velocidade do inimigo
+let jumpHeight = 100; // Altura do pulo
+
+let gameInterval, enemyMoveInterval;
+
+function jump() {
+    if (isJumping) return;
+
+    isJumping = true;
+    let jumpUp = setInterval(() => {
+        let playerBottom = parseInt(window.getComputedStyle(player).bottom);
+        if (playerBottom < jumpHeight) {
+            player.style.bottom = `${playerBottom + 10}px`;
+        } else {
+            clearInterval(jumpUp);
+            let jumpDown = setInterval(() => {
+                if (playerBottom > 0) {
+                    player.style.bottom = `${playerBottom - 10}px`;
+                } else {
+                    clearInterval(jumpDown);
+                    isJumping = false;
+                }
+            }, 20);
+        }
+    }, 20);
+}
+
+function moveEnemy() {
+    let enemyLeft = parseInt(window.getComputedStyle(enemy).right);
+    if (enemyLeft >= gameContainer.offsetWidth) {
+        enemy.style.right = `-50px`;
+        score++;
+        scoreElement.textContent = `Pontos: ${score}`;
+    } else {
+        enemy.style.right = `${enemyLeft + enemySpeed}px`;
+    }
+}
+
+function checkCollision() {
+    let playerRect = player.getBoundingClientRect();
+    let enemyRect = enemy.getBoundingClientRect();
+
+    if (
+        playerRect.top < enemyRect.bottom &&
+        playerRect.bottom > enemyRect.top &&
+        playerRect.left < enemyRect.right &&
+        playerRect.right > enemyRect.left
+    ) {
+        endGame();
+    }
+}
+
+function endGame() {
+    clearInterval(gameInterval);
+    clearInterval(enemyMoveInterval);
+    gameOverMessage.style.display = 'block';
+}
+
+function resetGame() {
+    score = 0;
+    scoreElement.textContent = `Pontos: ${score}`;
+    enemy.style.right = `-50px`;
+    player.style.bottom = `0px`;
+    gameOverMessage.style.display = 'none';
+
+    // Reinicia a lógica do jogo
+    gameInterval = setInterval(gameLoop, 20);
+    enemyMoveInterval = setInterval(moveEnemy, 20);
+}
+
+function gameLoop() {
+    moveEnemy();
+    checkCollision();
+}
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === " " && gameOverMessage.style.display === 'block') {
+        resetGame();
+    } else if (e.key === " " || e.key === "ArrowUp") {
+        jump();
+    }
+});
+
+gameInterval = setInterval(gameLoop, 20);
+enemyMoveInterval = setInterval(moveEnemy, 20);
+
+</script>
